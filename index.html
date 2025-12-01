@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wooden Tic Tac Toe — Interactive</title>
+
+  <style>
+    :root{
+      --wood-1:#4b2f22;
+      --wood-2:#7a4b35;
+      --accent:#d4b36b;
+      --panel:#f6efe6;
+      --shadow: rgba(0,0,0,0.35);
+      --glass: rgba(255,255,255,0.08);
+    }
+    html,body{
+      height:100%;margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial;
+      background: linear-gradient(180deg,var(--wood-1),#3b2319);
+      color:#111
+    }
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+    .panel{
+      width:760px;max-width:96vw;background:linear-gradient(180deg,#f9f6f2,#efe7dd);
+      border-radius:16px;padding:20px;box-shadow:0 12px 30px var(--shadow);
+      display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start
+    }
+
+    /* Wooden board */
+    .board-area{
+      background:linear-gradient(180deg,#87604e,#6b3f2f);
+      border-radius:12px;padding:18px;
+      box-shadow:inset 0 6px 12px rgba(0,0,0,0.25);
+      display:flex;flex-direction:column;align-items:center
+    }
+    .title{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .logo{
+      width:48px;height:48px;border-radius:8px;
+      background:linear-gradient(180deg,#b07a4e,#8a5b3a);
+      display:flex;align-items:center;justify-content:center;
+      color:white;font-weight:700;box-shadow:0 4px 8px rgba(0,0,0,0.25)
+    }
+    h1{font-size:20px;margin:0}
+
+    .board{
+      width:420px;height:420px;border-radius:10px;
+      background:linear-gradient(180deg,#bf8f6d,#8f5a3d);
+      display:grid;grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(3,1fr);
+      gap:16px;padding:16px;
+      box-shadow:inset 0 6px 12px rgba(0,0,0,0.25);
+    }
+    .cell{
+      background:linear-gradient(180deg,#ecd6b9,#d9b892);
+      border-radius:8px;display:flex;align-items:center;justify-content:center;
+      font-size:64px;font-weight:800;color:#2d1a0f;cursor:pointer;
+      user-select:none;
+      transition:transform .14s ease, box-shadow .14s ease;
+      box-shadow:0 6px 10px rgba(0,0,0,0.2);
+    }
+    .cell:active{transform:scale(.98)}
+    .cell.highlight{
+      box-shadow:0 10px 18px rgba(0,0,0,0.3),
+                  0 0 30px rgba(255,255,255,0.06) inset
+    }
+
+    /* Controls sidebar */
+    .controls{
+      padding:18px;border-radius:12px;
+      background:linear-gradient(180deg,#fff7e8,#f7efe6);
+      box-shadow:0 10px 20px rgba(0,0,0,0.08);
+      display:flex;flex-direction:column;gap:12px
+    }
+    .btn{
+      padding:10px 14px;border-radius:10px;border:0;
+      background:linear-gradient(180deg,var(--accent),#b0894d);
+      color:#2b1a0f;font-weight:700;cursor:pointer;
+      box-shadow:0 8px 18px rgba(0,0,0,0.18)
+    }
+    .btn:active{transform:translateY(1px)}
+
+    .mode-toggle{display:flex;gap:8px}
+
+    .scoreboard{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .score{
+      background:linear-gradient(180deg,#fff,#f2e7d6);
+      padding:10px;border-radius:10px;text-align:center;flex:1
+    }
+    .small{font-size:12px;color:#634b3f}
+
+    .msg{
+      padding:10px;border-radius:8px;background:var(--glass);
+      backdrop-filter: blur(2px);text-align:center;font-weight:700;
+    }
+
+    /***********************************************
+      Winner Glitter Animation
+    ************************************************/
+    .winner-effect {
+      animation: glowPulse 1.2s infinite alternate ease-in-out,
+                 glitter 0.35s infinite linear;
+      font-size: 26px !important;
+      font-weight: 900 !important;
+      color: #d49b00 !important;
+      text-shadow:
+        0 0 8px #ffcf67,
+        0 0 14px #d49b00,
+        0 0 22px #ffcf67;
+    }
+
+    @keyframes glowPulse {
+      0% { text-shadow: 0 0 6px #ffda8a; transform: scale(1); }
+      100% { text-shadow: 0 0 18px #ffae00; transform: scale(1.07); }
+    }
+
+    @keyframes glitter {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    @media (max-width:860px){
+      .panel{grid-template-columns:1fr;}
+      .board{width:300px;height:300px}
+      .cell{font-size:42px}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="panel">
+
+      <!-- Board Area -->
+      <div class="board-area">
+        <div class="title">
+          <div class="logo">T3</div>
+          <div>
+            <h1>Wooden Tic Tac Toe</h1>
+            <div class="small">Play against friend or computer</div>
+          </div>
+        </div>
+
+        <div class="board" id="board"></div>
+
+        <div style="display:flex;gap:12px;margin-top:12px;">
+          <button class="btn" id="restart">Restart</button>
+          <button class="btn" id="undo">Undo</button>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="controls">
+
+        <div class="scoreboard">
+          <div class="score">
+            <div class="small">Player X</div>
+            <div id="scoreX" class="small" style="font-size:20px;font-weight:800">0</div>
+          </div>
+          <div class="score">
+            <div class="small">Ties</div>
+            <div id="scoreT" class="small" style="font-size:20px;font-weight:800">0</div>
+          </div>
+          <div class="score">
+            <div class="small">Player O</div>
+            <div id="scoreO" class="small" style="font-size:20px;font-weight:800">0</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="small">Mode</div>
+          <div class="mode-toggle">
+            <button class="btn" id="mode-pvp">2 Players</button>
+            <button class="btn" id="mode-cpu">Vs Computer</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="small">Difficulty</div>
+          <select id="difficulty" class="select">
+            <option value="easy">Easy</option>
+            <option value="hard" selected>Hard (AI)</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="small">Turn</div>
+          <div id="turnDisplay" class="msg">X's turn</div>
+        </div>
+
+        <div>
+          <div class="small">Game log</div>
+          <div id="log" style="height:140px;overflow:auto;padding:8px;border-radius:8px;background:#fff;font-size:13px"></div>
+        </div>
+
+        <button class="btn" id="soundToggle">Sound: On</button>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    const boardEl = document.getElementById("board");
+    const turnDisplay = document.getElementById("turnDisplay");
+    const logEl = document.getElementById("log");
+    const scoreX = document.getElementById("scoreX");
+    const scoreO = document.getElementById("scoreO");
+    const scoreT = document.getElementById("scoreT");
+
+    let board = Array(9).fill("");
+    let current = "X";
+    let running = true;
+    let mode = "pvp";
+    let difficulty = "hard";
+    let history = [];
+    let score = { X:0, O:0, T:0 };
+    let soundOn = true;
+
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    function makeBoard(){
+      boardEl.innerHTML="";
+      for(let i=0;i<9;i++){
+        const c=document.createElement("div");
+        c.className="cell";
+        c.dataset.index=i;
+        c.addEventListener("click", onCell);
+        boardEl.appendChild(c);
+      }
+    }
+
+    function onCell(e){
+      const i=Number(e.target.dataset.index);
+      if(!running || board[i]) return;
+      makeMove(i, current);
+      if(mode==="cpu" && running && current==="O") setTimeout(cpuMove, 350);
+    }
+
+    function makeMove(i, player){
+      board[i]=player;
+      history.push(i);
+      updateUI();
+      const res=checkWin(board);
+
+      if(res){
+        running=false;
+        highlightWin(res.line);
+        announceResult(res.winner);
+
+      } else if(board.every(Boolean)){
+        running=false;
+        announceResult("T");
+
+      } else {
+        current=(player==="X")?"O":"X";
+        turnDisplay.textContent=current+"'s turn";
+      }
+    }
+
+    function updateUI(){
+      [...boardEl.children].forEach((c,i)=> c.textContent=board[i]);
+    }
+
+    function checkWin(b){
+      for(const w of wins){
+        const[a,b1,c]=w;
+        if(b[a] && b[a]===b[b1] && b[a]===b[c]) return {winner:b[a], line:w};
+      }
+      return null;
+    }
+
+    function highlightWin(line){
+      line.forEach(i => boardEl.children[i].classList.add("highlight"));
+    }
+
+    /******************************************
+      WINNER RESULT WITH GLITTER EFFECT
+    ******************************************/
+    function announceResult(w){
+      turnDisplay.classList.remove("winner-effect");
+
+      if(w === "T"){
+        log("Game tied");
+        score.T++;
+        scoreT.textContent=score.T;
+        turnDisplay.textContent="It's a tie";
+        return;
+      }
+
+      score[w]++;
+      scoreX.textContent=score.X;
+      scoreO.textContent=score.O;
+
+      turnDisplay.textContent=`${w} Wins!`;
+      turnDisplay.classList.add("winner-effect");
+
+      log("Winner: "+w);
+    }
+
+    function log(msg){
+      const d=document.createElement("div");
+      d.textContent=new Date().toLocaleTimeString()+" — "+msg;
+      logEl.prepend(d);
+    }
+
+    /* CPU AI */
+    function cpuMove(){
+      let idx;
+      if(difficulty==="easy"){
+        const empty=board.map((v,i)=> v?null:i).filter(v=>v!==null);
+        idx=empty[Math.floor(Math.random()*empty.length)];
+      } else idx=bestMove(board,"O");
+      makeMove(idx,"O");
+    }
+
+    function bestMove(bd, player){
+      const empty=bd.map((v,i)=> v?null:i).filter(v=>v!==null);
+      let best=-99, move=null;
+
+      empty.forEach(i=>{
+        let copy=[...bd]; copy[i]="O";
+        let score=minimax(copy,false);
+        if(score>best){ best=score; move=i; }
+      });
+      return move;
+    }
+
+    function minimax(bd, isMax){
+      const w=checkWin(bd);
+      if(w) return w.winner==="O"?10:-10;
+      if(bd.every(Boolean)) return 0;
+
+      const empty=bd.map((v,i)=> v?null:i).filter(v=>v!==null);
+
+      if(isMax){
+        let best=-99;
+        for(let i of empty){
+          let copy=[...bd]; copy[i]="O";
+          best=Math.max(best, minimax(copy,false));
+        }
+        return best;
+
+      } else {
+        let best=99;
+        for(let i of empty){
+          let copy=[...bd]; copy[i]="X";
+          best=Math.min(best, minimax(copy,true));
+        }
+        return best;
+      }
+    }
+
+    /* Controls */
+    document.getElementById("restart").onclick=resetBoard;
+    document.getElementById("undo").onclick=undo;
+    document.getElementById("mode-pvp").onclick=()=>{mode="pvp";resetBoard();}
+    document.getElementById("mode-cpu").onclick=()=>{mode="cpu";resetBoard();}
+    document.getElementById("difficulty").onchange=(e)=>difficulty=e.target.value;
+
+    document.getElementById("soundToggle").onclick=()=>{
+      soundOn=!soundOn;
+      document.getElementById("soundToggle").textContent="Sound: "+(soundOn?"On":"Off");
+    };
+
+    function undo(){
+      if(!history.length) return;
+
+      board[history.pop()]="";
+      if(mode==="cpu" && history.length) board[history.pop()]="";
+
+      turnDisplay.classList.remove("winner-effect");
+      current="X"; running=true;
+      updateUI();
+      turnDisplay.textContent="X's turn";
+    }
+
+    function resetBoard(){
+      board=Array(9).fill("");
+      history=[];
+      running=true;
+      current="X";
+      turnDisplay.classList.remove("winner-effect");
+      updateUI();
+      makeBoard();
+      turnDisplay.textContent="X's turn";
+    }
+
+    /* Init */
+    makeBoard();
+  </script>
+
+</body>
+</html>
